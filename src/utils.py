@@ -33,7 +33,7 @@ def draw_header(frame):
 
     cv2.putText(
         frame,
-        "DROWSYGUARD AI",
+        "DROWSYGUARD",
         (25,38),
         cv2.FONT_HERSHEY_SIMPLEX,
         0.9,
