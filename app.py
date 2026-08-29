@@ -20,7 +20,7 @@ detector=DrowsinessDetector()
 fps_counter=FPSCounter()
 
 print("="*50)
-print("DrowsyGuard AI")
+print("DrowsyGuard")
 print("Real-Time Drowsiness Detection System")
 print("="*50)
 print("Press Q to exit")
