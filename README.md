@@ -1,6 +1,6 @@
-# DrowsyGuard AI
+# DrowsyGuard
 
-DrowsyGuard AI is a real-time driver drowsiness detection system built with Python, OpenCV, and MediaPipe. It monitors eye movement through facial landmarks and uses the Eye Aspect Ratio (EAR) to detect prolonged eye closure and provide an instant warning.
+DrowsyGuard is a real-time driver drowsiness detection system built with Python, OpenCV, and MediaPipe. It monitors eye movement through facial landmarks and uses the Eye Aspect Ratio (EAR) to detect prolonged eye closure and provide an instant warning.
 
 ## Features
 
@@ -71,4 +71,3 @@ python app.py
 ## Author
 
 Samarth Varshney
----
