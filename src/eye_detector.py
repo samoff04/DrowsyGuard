@@ -1,27 +1,16 @@
-import cv2
 import numpy as np
 
 LEFT_EYE=[362,385,387,263,373,380]
 RIGHT_EYE=[33,160,158,133,153,144]
 
+MOUTH=[61,291,13,14,81,311,178,402]
+
 def distance(p1,p2):
-    return np.linalg.norm(np.array(p1)-np.array(p2))
+    return np.linalg.norm(np.array([p1.x,p1.y])-np.array([p2.x,p2.y]))
 
-def get_eye_points(landmarks,indices,width,height):
-    points=[]
+def calculate_ear(landmarks,indices):
+    points=[landmarks.landmark[i] for i in indices]
 
-    for index in indices:
-        landmark=landmarks.landmark[index]
-        points.append(
-            (
-                int(landmark.x*width),
-                int(landmark.y*height)
-            )
-        )
-
-    return points
-
-def eye_aspect_ratio(points):
     vertical_1=distance(points[1],points[5])
     vertical_2=distance(points[2],points[4])
     horizontal=distance(points[0],points[3])
@@ -29,54 +18,23 @@ def eye_aspect_ratio(points):
     if horizontal==0:
         return 0.0
 
-    return (vertical_1+vertical_2)/(2*horizontal)
+    return (vertical_1+vertical_2)/(2.0*horizontal)
 
-def calculate_ear(landmarks,width,height):
-    left=get_eye_points(
-        landmarks,
-        LEFT_EYE,
-        width,
-        height
-    )
+def calculate_eye_aspect_ratio(landmarks):
+    left_ear=calculate_ear(landmarks,LEFT_EYE)
+    right_ear=calculate_ear(landmarks,RIGHT_EYE)
 
-    right=get_eye_points(
-        landmarks,
-        RIGHT_EYE,
-        width,
-        height
-    )
+    return (left_ear+right_ear)/2.0
 
-    left_ear=eye_aspect_ratio(left)
-    right_ear=eye_aspect_ratio(right)
+def calculate_mouth_aspect_ratio(landmarks):
+    points=[landmarks.landmark[i] for i in MOUTH]
 
-    ear=(left_ear+right_ear)/2
+    vertical_1=distance(points[2],points[3])
+    vertical_2=distance(points[4],points[6])
+    vertical_3=distance(points[5],points[7])
+    horizontal=distance(points[0],points[1])
 
-    return ear,left,right
+    if horizontal==0:
+        return 0.0
 
-def draw_eye_landmarks(frame,left,right):
-    cv2.polylines(
-        frame,
-        [np.array(left)],
-        True,
-        (255,255,0),
-        1
-    )
-
-    cv2.polylines(
-        frame,
-        [np.array(right)],
-        True,
-        (255,255,0),
-        1
-    )
-
-    for point in left+right:
-        cv2.circle(
-            frame,
-            point,
-            2,
-            (255,255,255),
-            -1
-        )
-
-    return frame
+    return (vertical_1+vertical_2+vertical_3)/(3.0*horizontal)

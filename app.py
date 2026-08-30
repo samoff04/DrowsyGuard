@@ -1,100 +1,133 @@
 import cv2
 import winsound
-
-from src.face_detector import detect_face
-from src.eye_detector import calculate_ear,draw_eye_landmarks
-from src.drowsiness_detector import DrowsinessDetector
-from src.utils import FPSCounter,draw_header,draw_metrics,draw_status
 from src.config import CAMERA_INDEX,WINDOW_NAME,FRAME_WIDTH,FRAME_HEIGHT
+from src.face_detector import detect_face
+from src.eye_detector import calculate_eye_aspect_ratio,calculate_mouth_aspect_ratio
+from src.drowsiness_detector import DrowsinessDetector
+from src.utils import FPSCounter
 
-cap=cv2.VideoCapture(CAMERA_INDEX,cv2.CAP_DSHOW)
+def main():
+    cap=cv2.VideoCapture(CAMERA_INDEX,cv2.CAP_MSMF)
+    cap.set(cv2.CAP_PROP_FRAME_WIDTH,FRAME_WIDTH)
+    cap.set(cv2.CAP_PROP_FRAME_HEIGHT,FRAME_HEIGHT)
 
-cap.set(cv2.CAP_PROP_FRAME_WIDTH,FRAME_WIDTH)
-cap.set(cv2.CAP_PROP_FRAME_HEIGHT,FRAME_HEIGHT)
+    if not cap.isOpened():
+        print("Error: Could not open webcam.")
+        return
 
-if not cap.isOpened():
-    print("Error: Could not open webcam.")
-    exit()
+    detector=DrowsinessDetector()
+    fps_counter=FPSCounter()
 
-detector=DrowsinessDetector()
-fps_counter=FPSCounter()
+    while True:
+        ret,frame=cap.read()
 
-print("="*50)
-print("DrowsyGuard")
-print("Real-Time Drowsiness Detection System")
-print("="*50)
-print("Press Q to exit")
-print("="*50)
+        if not ret:
+            print("Error: Could not read frame.")
+            break
 
-while True:
+        frame=cv2.flip(frame,1)
+        landmarks=detect_face(frame)
 
-    success,frame=cap.read()
+        if landmarks:
+            ear=calculate_eye_aspect_ratio(landmarks)
+            mar=calculate_mouth_aspect_ratio(landmarks)
 
-    if not success:
-        break
+            drowsy,yawning,should_alarm=detector.update(ear,mar)
 
-    frame=cv2.flip(frame,1)
+            if should_alarm:
+                winsound.Beep(1000,500)
 
-    height,width=frame.shape[:2]
+            if drowsy:
+                status="DROWSINESS DETECTED"
+            elif yawning:
+                status="YAWNING DETECTED"
+            else:
+                status="AWAKE"
 
-    face=detect_face(frame)
+            status_color=(0,0,255) if (drowsy or yawning) else (0,255,0)
 
-    ear=0.0
-    drowsy=False
-    alarm=False
-    face_detected=False
+            cv2.putText(
+                frame,
+                f"EAR: {ear:.2f}",
+                (20,40),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.7,
+                (255,255,255),
+                2
+            )
 
-    if face:
+            cv2.putText(
+                frame,
+                f"MAR: {mar:.2f}",
+                (20,70),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.7,
+                (255,255,255),
+                2
+            )
 
-        face_detected=True
+            cv2.putText(
+                frame,
+                status,
+                (20,110),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.8,
+                status_color,
+                2
+            )
 
-        ear,left_eye,right_eye=calculate_ear(
-            face,
-            width,
-            height
-        )
+            cv2.putText(
+                frame,
+                f"Eye Frames: {detector.closed_frames}",
+                (20,145),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.6,
+                (255,255,255),
+                2
+            )
 
-        frame=draw_eye_landmarks(
+            cv2.putText(
+                frame,
+                f"Yawn Frames: {detector.yawn_frames}",
+                (20,175),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.6,
+                (255,255,255),
+                2
+            )
+
+        else:
+            detector.reset()
+
+            cv2.putText(
+                frame,
+                "FACE NOT DETECTED",
+                (20,40),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.8,
+                (0,0,255),
+                2
+            )
+
+        fps=fps_counter.update()
+
+        cv2.putText(
             frame,
-            left_eye,
-            right_eye
+            f"FPS: {fps:.1f}",
+            (20,210),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            0.6,
+            (255,255,255),
+            2
         )
 
-        drowsy,alarm=detector.update(ear)
+        cv2.imshow(WINDOW_NAME,frame)
 
-        if alarm:
-            winsound.Beep(1000,500)
+        if cv2.waitKey(1)&0xFF==ord("q"):
+            break
 
-    else:
-        detector.reset()
+    cap.release()
+    cv2.destroyAllWindows()
 
-    fps=fps_counter.update()
-
-    frame=draw_header(frame)
-
-    frame=draw_status(
-        frame,
-        ear,
-        drowsy,
-        face_detected
-    )
-
-    frame=draw_metrics(
-        frame,
-        ear,
-        drowsy,
-        fps,
-        detector.closed_frames
-    )
-
-    cv2.imshow(WINDOW_NAME,frame)
-
-    key=cv2.waitKey(1)&0xFF
-
-    if key==ord("q"):
-        break
-
-cap.release()
-cv2.destroyAllWindows()
-
-print("DrowsyGuard AI stopped.")
+if __name__=="__main__":
+    main()
