@@ -37,89 +37,41 @@ def main():
             if should_alarm:
                 winsound.Beep(1000,500)
 
+            blink_count=detector.get_blink_count()
+            blink_rate=detector.get_blink_rate()
+
             if drowsy:
                 status="DROWSINESS DETECTED"
+                status_color=(0,0,255)
             elif yawning:
                 status="YAWNING DETECTED"
+                status_color=(0,140,255)
             else:
                 status="AWAKE"
+                status_color=(0,255,0)
 
-            status_color=(0,0,255) if (drowsy or yawning) else (0,255,0)
+            cv2.putText(frame,f"EAR: {ear:.2f}",(20,40),cv2.FONT_HERSHEY_SIMPLEX,0.7,(255,255,255),2)
 
-            cv2.putText(
-                frame,
-                f"EAR: {ear:.2f}",
-                (20,40),
-                cv2.FONT_HERSHEY_SIMPLEX,
-                0.7,
-                (255,255,255),
-                2
-            )
+            cv2.putText(frame,f"MAR: {mar:.2f}",(20,70),cv2.FONT_HERSHEY_SIMPLEX,0.7,(255,255,255),2)
 
-            cv2.putText(
-                frame,
-                f"MAR: {mar:.2f}",
-                (20,70),
-                cv2.FONT_HERSHEY_SIMPLEX,
-                0.7,
-                (255,255,255),
-                2
-            )
+            cv2.putText(frame,status,(20,110),cv2.FONT_HERSHEY_SIMPLEX,0.8,status_color,2)
 
-            cv2.putText(
-                frame,
-                status,
-                (20,110),
-                cv2.FONT_HERSHEY_SIMPLEX,
-                0.8,
-                status_color,
-                2
-            )
+            cv2.putText(frame,f"Eye Frames: {detector.closed_frames}",(20,145),cv2.FONT_HERSHEY_SIMPLEX,0.6,(255,255,255),2)
 
-            cv2.putText(
-                frame,
-                f"Eye Frames: {detector.closed_frames}",
-                (20,145),
-                cv2.FONT_HERSHEY_SIMPLEX,
-                0.6,
-                (255,255,255),
-                2
-            )
+            cv2.putText(frame,f"Yawn Frames: {detector.yawn_frames}",(20,175),cv2.FONT_HERSHEY_SIMPLEX,0.6,(255,255,255),2)
 
-            cv2.putText(
-                frame,
-                f"Yawn Frames: {detector.yawn_frames}",
-                (20,175),
-                cv2.FONT_HERSHEY_SIMPLEX,
-                0.6,
-                (255,255,255),
-                2
-            )
+            cv2.putText(frame,f"Blinks (60s): {blink_count}",(20,205),cv2.FONT_HERSHEY_SIMPLEX,0.6,(255,255,255),2)
+
+            cv2.putText(frame,f"Blink Rate: {blink_rate}/min",(20,235),cv2.FONT_HERSHEY_SIMPLEX,0.6,(255,255,255),2)
 
         else:
             detector.reset()
 
-            cv2.putText(
-                frame,
-                "FACE NOT DETECTED",
-                (20,40),
-                cv2.FONT_HERSHEY_SIMPLEX,
-                0.8,
-                (0,0,255),
-                2
-            )
+            cv2.putText(frame,"FACE NOT DETECTED",(20,40),cv2.FONT_HERSHEY_SIMPLEX,0.8,(0,0,255),2)
 
         fps=fps_counter.update()
 
-        cv2.putText(
-            frame,
-            f"FPS: {fps:.1f}",
-            (20,210),
-            cv2.FONT_HERSHEY_SIMPLEX,
-            0.6,
-            (255,255,255),
-            2
-        )
+        cv2.putText(frame,f"FPS: {fps:.1f}",(20,270),cv2.FONT_HERSHEY_SIMPLEX,0.6,(255,255,255),2)
 
         cv2.imshow(WINDOW_NAME,frame)
 
