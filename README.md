@@ -12,6 +12,9 @@ DrowsyGuard is a real-time driver drowsiness detection system built with Python,
 - FPS monitoring
 - Blink detection and counting
 - Rolling blink-rate analysis
+- Head pose estimation
+- Driver distraction detection
+- Real-time yaw and pitch monitoring
 
 ## Tech Stack
 
