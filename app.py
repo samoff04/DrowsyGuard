@@ -1,9 +1,10 @@
 import cv2
 import winsound
-from src.config import CAMERA_INDEX,WINDOW_NAME,FRAME_WIDTH,FRAME_HEIGHT
+from src.config import CAMERA_INDEX,WINDOW_NAME,FRAME_WIDTH,FRAME_HEIGHT,YAW_THRESHOLD,PITCH_THRESHOLD
 from src.face_detector import detect_face
 from src.eye_detector import calculate_eye_aspect_ratio,calculate_mouth_aspect_ratio
 from src.drowsiness_detector import DrowsinessDetector
+from src.head_pose_detector import detect_head_pose
 from src.utils import FPSCounter
 
 def main():
@@ -34,6 +35,10 @@ def main():
 
             drowsy,yawning,should_alarm=detector.update(ear,mar)
 
+            pitch,yaw=detect_head_pose(frame,landmarks)
+
+            distracted=abs(yaw)>YAW_THRESHOLD or abs(pitch)>PITCH_THRESHOLD
+
             if should_alarm:
                 winsound.Beep(1000,500)
 
@@ -46,6 +51,9 @@ def main():
             elif yawning:
                 status="YAWNING DETECTED"
                 status_color=(0,140,255)
+            elif distracted:
+                status="DISTRACTED"
+                status_color=(0,0,255)
             else:
                 status="AWAKE"
                 status_color=(0,255,0)
@@ -64,14 +72,17 @@ def main():
 
             cv2.putText(frame,f"Blink Rate: {blink_rate}/min",(20,235),cv2.FONT_HERSHEY_SIMPLEX,0.6,(255,255,255),2)
 
+            cv2.putText(frame,f"Pitch: {pitch:.1f}",(20,270),cv2.FONT_HERSHEY_SIMPLEX,0.6,(255,255,255),2)
+
+            cv2.putText(frame,f"Yaw: {yaw:.1f}",(20,300),cv2.FONT_HERSHEY_SIMPLEX,0.6,(255,255,255),2)
+
         else:
             detector.reset()
-
             cv2.putText(frame,"FACE NOT DETECTED",(20,40),cv2.FONT_HERSHEY_SIMPLEX,0.8,(0,0,255),2)
 
         fps=fps_counter.update()
 
-        cv2.putText(frame,f"FPS: {fps:.1f}",(20,270),cv2.FONT_HERSHEY_SIMPLEX,0.6,(255,255,255),2)
+        cv2.putText(frame,f"FPS: {fps:.1f}",(20,335),cv2.FONT_HERSHEY_SIMPLEX,0.6,(255,255,255),2)
 
         cv2.imshow(WINDOW_NAME,frame)
 
