@@ -1,39 +1,25 @@
 # DrowsyGuard
 
-DrowsyGuard is a real-time driver drowsiness detection system built with Python, OpenCV, and MediaPipe. It monitors facial landmarks to detect prolonged eye closure and yawning, providing real-time visual and audio alerts.
+A real-time driver drowsiness and distraction detection system built using Python, OpenCV and MediaPipe.
 
 ## Features
 
 - Face and facial landmark detection
-- Eye Aspect Ratio (EAR) calculation
-- Mouth Aspect Ratio (MAR) calculation
-- Real-time drowsiness warning
-- Audio alerts using system beep
-- FPS monitoring
-- Blink detection and counting
-- Rolling blink-rate analysis
-- Head pose estimation
+- Eye closure and yawning detection using EAR and MAR
+- Blink counting and rate analysis
+- Head pose estimation using yaw and pitch
 - Driver distraction detection
-- Real-time yaw and pitch monitoring
+- Combined alertness score with audio warnings
 
 ## Tech Stack
 
-- Python
-- OpenCV
-- MediaPipe
-- NumPy
+Python · OpenCV · MediaPipe · NumPy
 
 ## Project Structure
 
 ```text
 DrowsyGuard/
 ├── src/
-│   ├── __init__.py
-│   ├── config.py
-│   ├── face_detector.py
-│   ├── eye_detector.py
-│   ├── drowsiness_detector.py
-│   └── utils.py
 ├── assets/
 ├── app.py
 ├── requirements.txt
@@ -43,30 +29,16 @@ DrowsyGuard/
 
 ## Installation
 
-### Clone the Repository
-
 ```bash
 git clone https://github.com/samoff04/DrowsyGuard.git
 cd DrowsyGuard
-```
-
-### Create a Virtual Environment
-
-```bash
 python -m venv venv
 ```
 
-### Activate the Virtual Environment
-
-Windows:
+Activate the environment and install dependencies:
 
 ```bash
 venv\Scripts\activate
-```
-
-### Install Dependencies
-
-```bash
 pip install -r requirements.txt
 ```
 
@@ -76,7 +48,7 @@ pip install -r requirements.txt
 python app.py
 ```
 
-Press `Q` to exit the application.
+Press `Q` to exit.
 
 ## Author
 
