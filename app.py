@@ -1,10 +1,12 @@
 import cv2
 import winsound
+import time
 from src.config import CAMERA_INDEX,WINDOW_NAME,FRAME_WIDTH,FRAME_HEIGHT,YAW_THRESHOLD,PITCH_THRESHOLD
 from src.face_detector import detect_face
 from src.eye_detector import calculate_eye_aspect_ratio,calculate_mouth_aspect_ratio
 from src.drowsiness_detector import DrowsinessDetector
 from src.head_pose_detector import detect_head_pose
+from src.alertness_analyzer import AlertnessAnalyzer
 from src.utils import FPSCounter
 
 def main():
@@ -17,7 +19,9 @@ def main():
         return
 
     detector=DrowsinessDetector()
+    analyzer=AlertnessAnalyzer()
     fps_counter=FPSCounter()
+    session_start=time.time()
 
     while True:
         ret,frame=cap.read()
@@ -36,14 +40,23 @@ def main():
             drowsy,yawning,should_alarm=detector.update(ear,mar)
 
             pitch,yaw=detect_head_pose(frame,landmarks)
-
             distracted=abs(yaw)>YAW_THRESHOLD or abs(pitch)>PITCH_THRESHOLD
-
-            if should_alarm:
-                winsound.Beep(1000,500)
 
             blink_count=detector.get_blink_count()
             blink_rate=detector.get_blink_rate()
+
+            elapsed_time=time.time()-session_start
+
+            score,level=analyzer.calculate_score(
+                drowsy,
+                yawning,
+                distracted,
+                blink_count,
+                elapsed_time
+            )
+
+            if should_alarm or analyzer.should_alarm(score):
+                winsound.Beep(1000,500)
 
             if drowsy:
                 status="DROWSINESS DETECTED"
@@ -58,31 +71,33 @@ def main():
                 status="AWAKE"
                 status_color=(0,255,0)
 
+            if score>=60:
+                score_color=(0,0,255)
+            elif score>=40:
+                score_color=(0,140,255)
+            elif score>=20:
+                score_color=(0,255,255)
+            else:
+                score_color=(0,255,0)
+
             cv2.putText(frame,f"EAR: {ear:.2f}",(20,40),cv2.FONT_HERSHEY_SIMPLEX,0.7,(255,255,255),2)
-
             cv2.putText(frame,f"MAR: {mar:.2f}",(20,70),cv2.FONT_HERSHEY_SIMPLEX,0.7,(255,255,255),2)
-
             cv2.putText(frame,status,(20,110),cv2.FONT_HERSHEY_SIMPLEX,0.8,status_color,2)
-
             cv2.putText(frame,f"Eye Frames: {detector.closed_frames}",(20,145),cv2.FONT_HERSHEY_SIMPLEX,0.6,(255,255,255),2)
-
             cv2.putText(frame,f"Yawn Frames: {detector.yawn_frames}",(20,175),cv2.FONT_HERSHEY_SIMPLEX,0.6,(255,255,255),2)
-
             cv2.putText(frame,f"Blinks (60s): {blink_count}",(20,205),cv2.FONT_HERSHEY_SIMPLEX,0.6,(255,255,255),2)
-
             cv2.putText(frame,f"Blink Rate: {blink_rate}/min",(20,235),cv2.FONT_HERSHEY_SIMPLEX,0.6,(255,255,255),2)
-
             cv2.putText(frame,f"Pitch: {pitch:.1f}",(20,270),cv2.FONT_HERSHEY_SIMPLEX,0.6,(255,255,255),2)
-
             cv2.putText(frame,f"Yaw: {yaw:.1f}",(20,300),cv2.FONT_HERSHEY_SIMPLEX,0.6,(255,255,255),2)
+            cv2.putText(frame,f"Alertness Score: {score}/100",(20,335),cv2.FONT_HERSHEY_SIMPLEX,0.7,score_color,2)
+            cv2.putText(frame,f"Alert Level: {level}",(20,370),cv2.FONT_HERSHEY_SIMPLEX,0.7,score_color,2)
 
         else:
             detector.reset()
             cv2.putText(frame,"FACE NOT DETECTED",(20,40),cv2.FONT_HERSHEY_SIMPLEX,0.8,(0,0,255),2)
 
         fps=fps_counter.update()
-
-        cv2.putText(frame,f"FPS: {fps:.1f}",(20,335),cv2.FONT_HERSHEY_SIMPLEX,0.6,(255,255,255),2)
+        cv2.putText(frame,f"FPS: {fps:.1f}",(20,405),cv2.FONT_HERSHEY_SIMPLEX,0.6,(255,255,255),2)
 
         cv2.imshow(WINDOW_NAME,frame)
 
